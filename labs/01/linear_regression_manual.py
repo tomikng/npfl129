@@ -18,24 +18,36 @@ def main(args: argparse.Namespace) -> float:
     dataset = sklearn.datasets.load_diabetes()
 
     # The input data are in `dataset.data`, targets are in `dataset.target`.
+    # print(dataset.data)
 
     # If you want to learn about the dataset, you can print some information
     # about it using `print(dataset.DESCR)`.
 
     # TODO: Append a constant feature with value 1 to the end of every input data.
     # Then we do not need to explicitly represent bias - it becomes the last weight.
+    X = np.append(dataset.data, np.ones((dataset.data.shape[0], 1)), axis=1)
+    t = dataset.target
 
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    X_train, X_test, t_train, t_test = sklearn.model_selection.train_test_split(
+        X, t, test_size=args.test_size, random_state=args.seed
+    )
+
 
     # TODO: Solve the linear regression using the algorithm from the lecture,
     # explicitly computing the matrix inverse (using `np.linalg.inv`).
+    weights = np.linalg.inv(X_train.T @ X_train) @ X_train.T @ t_train
+
 
     # TODO: Predict target values on the test set.
 
+    t_pred = X_test @ weights
+
     # TODO: Manually compute root mean square error on the test set predictions.
-    rmse = ...
+    n = len(t_test)
+    rmse = np.sqrt(np.sum((t_test - t_pred) ** 2) / n)
 
     return rmse
 

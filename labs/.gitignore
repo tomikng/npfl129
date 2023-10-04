@@ -3,3 +3,4 @@ logs/
 *.npz
 *.xz
 *.zip
+.venv

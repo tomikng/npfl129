@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 import argparse
 
 import numpy as np
@@ -18,6 +18,8 @@ parser.add_argument("--plot", default=False, const=True, nargs="?", type=str, he
 parser.add_argument("--recodex", default=False, action="store_true", help="Running in ReCodEx")
 parser.add_argument("--seed", default=92, type=int, help="Random seed")
 parser.add_argument("--test_size", default=0.5, type=lambda x: int(x) if x.isdigit() else float(x), help="Test size")
+
+
 # If you add more arguments, ReCodEx will keep them with your default values.
 
 
@@ -30,37 +32,35 @@ def main(args: argparse.Namespace) -> tuple[list[float], float, float]:
 
     # TODO: Append a constant feature with value 1 to the end of every input data.
     # Then we do not need to explicitly represent bias - it becomes the last weight.
+    data = np.hstack([data, np.ones((data.shape[0], 1))])
 
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
-    train_data, test_data, train_target, test_target = ...
+    train_data, test_data, train_target, test_target = \
+        sklearn.model_selection.train_test_split(data, target, test_size=args.test_size, random_state=args.seed)
 
     # Generate initial linear regression weights.
     weights = generator.uniform(size=train_data.shape[1], low=-0.1, high=0.1)
+    no_bias_mask = np.array([1] * (len(weights) - 1) + [0])
 
     train_rmses, test_rmses = [], []
     for epoch in range(args.epochs):
         permutation = generator.permutation(train_data.shape[0])
+        gradient, gradient_components = 0, 0
+        for i in permutation:
+            gradient += (train_data[i] @ weights - train_target[i]) * train_data[i]
+            gradient_components += 1
+            if gradient_components == args.batch_size:
+                weights -= args.learning_rate * (gradient / gradient_components + args.l2 * weights * no_bias_mask)
+                gradient, gradient_components = 0, 0
 
-        # TODO: Process the data in the order of `permutation`. For every
-        # `args.batch_size` of them, average their gradient, and update the weights.
-        # You can assume that `args.batch_size` exactly divides `len(train_data)`.
-        #
-        # The gradient for the input example $(x_i, t_i)$ is
-        # - $(x_i^T weights - t_i) x_i$ for the unregularized loss (1/2 MSE loss),
-        # - $args.l2 * weights_with_bias_set_to_zero$ for the L2 regularization loss,
-        #   where we set the bias to zero because the bias should not be regularized,
-        # and the SGD update is
-        #   weights = weights - args.learning_rate * gradient
+        train_rmses.append(sklearn.metrics.mean_squared_error(train_target, train_data @ weights, squared=False))
+        test_rmses.append(sklearn.metrics.mean_squared_error(test_target, test_data @ weights, squared=False))
 
-        # TODO: Append current RMSE on train/test to `train_rmses`/`test_rmses`.
-        train_rmses.append(...)
-        test_rmses.append(...)
-
-    # TODO: Compute into `explicit_rmse` test data RMSE when fitting
-    # `sklearn.linear_model.LinearRegression` on `train_data` (ignoring `args.l2`).
-    explicit_rmse = ...
+    explicit_rmse = sklearn.metrics.mean_squared_error(
+        sklearn.linear_model.LinearRegression().fit(train_data, train_target).predict(test_data),
+        test_target, squared=False)
 
     if args.plot:
         import matplotlib.pyplot as plt

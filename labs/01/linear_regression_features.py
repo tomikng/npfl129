@@ -27,20 +27,29 @@ def main(args: argparse.Namespace) -> list[float]:
         # TODO: Create features `(x^1, x^2, ..., x^order)`, preferably in this ordering.
         # Note that you can just append `x^order` to the features from the previous iteration.
 
+        features = np.power.outer(xs, np.arange(1, order + 1))
+
         # TODO: Split the data into a train set and a test set.
         # Use `sklearn.model_selection.train_test_split` method call, passing
         # arguments `test_size=args.test_size, random_state=args.seed`.
 
+        train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(
+            features, ys, test_size=args.test_size, random_state=args.seed
+        )
+
         # TODO: Fit a linear regression model using `sklearn.linear_model.LinearRegression`;
         # consult the documentation and see especially the `fit` method.
-        model = ...
+        model = sklearn.linear_model.LinearRegression()
+        model.fit(train_data, train_target)
 
         # TODO: Predict targets on the test set using the `predict` method of the trained model.
+
+        prediction_target = model.predict(test_data)
 
         # TODO: Compute root mean square error on the test set predictions.
         # You can either do it manually or look at `sklearn.metrics.mean_squared_error` method
         # and its `squared` parameter.
-        rmse = ...
+        rmse = np.sqrt(sklearn.metrics.mean_squared_error(test_target, prediction_target))
 
         rmses.append(rmse)
 

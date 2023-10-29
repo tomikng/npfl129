@@ -52,31 +52,54 @@ def main(args: argparse.Namespace) -> tuple[tuple[np.ndarray, ...], list[float]]
         # in softmax can easily overflow. To avoid it, you should use the fact that
         # $softmax(z) = softmax(z + any_constant)$ and compute $softmax(z) = softmax(z - maximum_of_z)$.
         # That way we only exponentiate values which are non-positive, and overflow does not occur.
-        raise NotImplementedError()
+        # Hidden layer
+        hidden_input = inputs @ weights[0] + biases[0]
+        hidden_output = np.maximum(0, hidden_input)  # ReLU activation
+
+        # Output layer with softmax
+        output_input = hidden_output @ weights[1] + biases[1]
+        output_input -= np.max(output_input, axis=1, keepdims=True)  # for numerical stability
+        exps = np.exp(output_input)
+        softmax_output = exps / np.sum(exps, axis=1, keepdims=True)
+
+        return hidden_output, softmax_output
 
     for epoch in range(args.epochs):
         permutation = generator.permutation(train_data.shape[0])
+        for batch_start in range(0, len(train_data), args.batch_size):
+            batch_indices = permutation[batch_start:batch_start + args.batch_size]
+            batch_data = train_data[batch_indices]
+            batch_target = train_target[batch_indices]
 
-        # TODO: Process the data in the order of `permutation`. For every
-        # `args.batch_size` of them, average their gradient, and update the weights.
-        # You can assume that `args.batch_size` exactly divides `train_data.shape[0]`.
-        #
-        # The gradient used in SGD has now four parts, gradient of `weights[0]` and `weights[1]`
-        # and gradient of `biases[0]` and `biases[1]`.
-        #
-        # You can either compute the gradient directly from the neural network formula,
-        # i.e., as a gradient of $-log P(target | data)$, or you can compute
-        # it step by step using the chain rule of derivatives, in the following order:
-        # - compute the derivative of the loss with respect to *inputs* of the
-        #   softmax on the last layer,
-        # - compute the derivative with respect to `weights[1]` and `biases[1]`,
-        # - compute the derivative with respect to the hidden layer output,
-        # - compute the derivative with respect to the hidden layer input,
-        # - compute the derivative with respect to `weights[0]` and `biases[0]`.
+            # Forward pass
+            hidden_output, softmax_output = forward(batch_data)
 
-        # TODO: After the SGD epoch, measure the accuracy for both the
-        # train test and the test set.
-        train_accuracy, test_accuracy = ...
+            # Compute the gradient
+            grad_output = softmax_output.copy()
+            grad_output[range(len(batch_target)), batch_target] -= 1  # derivative of loss w.r.t softmax input
+
+            grad_weights1 = hidden_output.T @ grad_output
+            grad_biases1 = np.sum(grad_output, axis=0)
+
+            grad_hidden = grad_output @ weights[1].T
+            grad_hidden[hidden_output <= 0] = 0  # backprop through ReLU
+
+            grad_weights0 = batch_data.T @ grad_hidden
+            grad_biases0 = np.sum(grad_hidden, axis=0)
+
+            # Update weights and biases
+            weights[1] -= args.learning_rate * grad_weights1 / args.batch_size
+            biases[1] -= args.learning_rate * grad_biases1 / args.batch_size
+
+            weights[0] -= args.learning_rate * grad_weights0 / args.batch_size
+            biases[0] -= args.learning_rate * grad_biases0 / args.batch_size
+
+        # Compute training and testing accuracy
+        _, train_preds = forward(train_data)
+        train_accuracy = np.mean(np.argmax(train_preds, axis=1) == train_target)
+
+        _, test_preds = forward(test_data)
+        test_accuracy = np.mean(np.argmax(test_preds, axis=1) == test_target)
 
         print("After epoch {}: train acc {:.1f}%, test acc {:.1f}%".format(
             epoch + 1, 100 * train_accuracy, 100 * test_accuracy))

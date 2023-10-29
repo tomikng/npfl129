@@ -29,10 +29,13 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]
 
     # TODO: Append a constant feature with value 1 to the end of every input data.
     # Then we do not need to explicitly represent bias - it becomes the last weight.
+    data = np.pad(data, [(0, 0), (0, 1)], constant_values=1)
 
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(
+        data, target, test_size=args.test_size, random_state=args.seed)
 
     # Generate initial logistic regression weights.
     weights = generator.uniform(size=train_data.shape[1], low=-0.1, high=0.1)
@@ -43,11 +46,34 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]
         # TODO: Process the data in the order of `permutation`. For every
         # `args.batch_size` of them, average their gradient, and update the weights.
         # You can assume that `args.batch_size` exactly divides `train_data.shape[0]`.
+        def sigmoid(x):
+            return 1 / (1 + np.exp(-x))
+
+        gradient, gradient_components = 0, 0
+        for i in permutation:
+            gradient += (sigmoid(train_data[i] @ weights) - train_target[i]) * train_data[i]
+            gradient_components += 1
+            if gradient_components == args.batch_size:
+                weights -= args.learning_rate * gradient / gradient_components
+                gradient, gradient_components = 0, 0
+        assert gradient_components == 0
+
+        if False:
+            # Alternatively, we could process the whole batch at a time, which is more efficient.
+            for i in range(0, len(permutation), args.batch_size):
+                batch = permutation[i:i + args.batch_size]
+                outputs = sigmoid(train_data[batch] @ weights)
+                gradient = train_data[batch].T @ (outputs - train_target[batch]) / len(batch)
+                weights -= args.learning_rate * gradient
 
         # TODO: After the SGD epoch, measure the average loss and accuracy for both the
         # train set and the test set. The loss is the average MLE loss (i.e., the
         # negative log-likelihood, or cross-entropy loss, or KL loss) per example.
-        train_accuracy, train_loss, test_accuracy, test_loss = ...
+        train_loss = sklearn.metrics.log_loss(train_target, sigmoid(train_data @ weights))
+        train_accuracy = sklearn.metrics.accuracy_score(train_target, train_data @ weights >= 0)
+        # For fun, we compute the test metrics manually :-)
+        test_loss = np.mean(-np.log((1 - test_target) + (2 * test_target - 1) * sigmoid(test_data @ weights)))
+        test_accuracy = np.mean(test_target == (test_data @ weights >= 0))
 
         print("After epoch {}: train loss {:.4f} acc {:.1f}%, test loss {:.4f} acc {:.1f}%".format(
             epoch + 1, train_loss, 100 * train_accuracy, test_loss, 100 * test_accuracy))
@@ -60,7 +86,7 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]
             xs = np.linspace(np.min(data[:, 0]), np.max(data[:, 0]), 50)
             ys = np.linspace(np.min(data[:, 1]), np.max(data[:, 1]), 50)
             predictions = [[1 / (1 + np.exp(-([x, y, 1] @ weights))) for x in xs] for y in ys]
-            plt.contourf(xs, ys, predictions, levels=20, cmap="RdBu", alpha=0.7)
+            plt.contourf(xs, ys, predictions, levels=21, cmap="RdBu", alpha=0.7)
             plt.contour(xs, ys, predictions, levels=[0.25, 0.5, 0.75], colors="k")
             plt.scatter(train_data[:, 0], train_data[:, 1], c=train_target, label="train", marker="P", cmap="RdBu")
             plt.scatter(test_data[:, 0], test_data[:, 1], c=test_target, label="test", cmap="RdBu")

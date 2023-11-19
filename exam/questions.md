@@ -40,7 +40,7 @@
 
 - For discrete random variables, define entropy, cross-entropy, Kullback-Leibler
   divergence, and prove the Gibbs inequality (i.e., that KL divergence is
-  non-negative). [10]
+  non-negative). [20]
 
 - Explain the notion of likelihood in maximum likelihood estimation. [5]
 
@@ -70,7 +70,7 @@
   a $K$-class logistic regression model, including the explicit formulas of the
   loss function and its gradient. [20]
 
-- Prove why are decision regions of a multiclass logistic regression convex. [10]
+- Prove that decision regions of a multiclass logistic regression convex. [10]
 
 - Considering a single-layer MLP with $D$ input neurons, $H$ hidden
   neurons, $K$ output neurons, hidden activation $f$, and output activation $a$,
@@ -110,8 +110,8 @@
 
 - Explain the difference between micro-averaged and macro-averaged $F_1$ scores. [10]
 
-- Explain (using examples) why accuracy is not a suitable metric for
-  unbalanced target classes. [5]
+- Explain (using examples) why accuracy is not a suitable metric for unbalanced
+  target classes, e.g., for a diagnostic test for a contagious desease. [5]
 
 ### Questions@:, Lecture 6 Questions
 - Explain how is the TF-IDF weight of a given document-term pair computed. [5]
@@ -132,3 +132,48 @@
 - How would you proceed to train a part-of-speech tagger (i.e., you want to
   assign each word with its part of speech) if you only could use pre-trained
   word embeddings and MLP classifier? [5]
+
+### Questions@:, Lecture 7 Questions
+- Describe k-nearest neighbors prediction, both for regression and
+  classification. Define $L_p$ norm and describe uniform, inverse, 
+  and softmax weighting. [10]
+
+- Show that $L^2$-regularization can be obtained from a suitable prior
+  by Bayesian inference (from the MAP estimate). [10]
+
+- Write down how $p(C_k | \boldsymbol x)$ is approximated in a Naive Bayes
+  classifier, explicitly state the Naive Bayes assumption, and show how is the 
+  prediction performed. [10]
+
+- Considering a Gaussian naive Bayes, describe how are $p(x_d | C_k)$ modeled
+  (what distribution and which parameters does it have) and how we estimate it
+  during fitting. [10]
+
+- Considering a Bernoulli naive Bayes, describe how are $p(x_d | C_k)$ modeled
+  (what distribution and which parameters does it have) and how we estimate it
+  during fitting. [10]
+
+### Questions@: Lecture 8 Questions
+
+- Prove that independent discrete random variables are uncorrelated. [10]
+
+- Write down the definition of covariance and Pearson correlation coefficient
+  $\rho$, including its range. [10]
+
+- Explain how are the Spearman's rank correlation coefficient and the Kendall
+  rank correlation coefficient computed (no need to describe the Pearson
+  correlation coefficient). [10]
+
+- Describe setups where a correlation coefficient might be a good
+  evaluation metric. [5]
+
+- Describe under what circumstance correlation can be used to assess validity
+  of evaluation metrics. [5]
+
+- Define Cohen's $\kappa$ and explain what is used for when preparing data for
+  machine learning. [10]
+
+- Considering an averaging ensemble of $M$ models, prove the relation between
+  the average mean squared error of the ensemble and the average error of the
+  individual models, assuming the model errors have zero means and are
+  uncorrelated. [20]
